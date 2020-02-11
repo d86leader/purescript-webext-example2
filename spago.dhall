@@ -1,5 +1,11 @@
 { name = "borderify"
-, dependencies = [ "console", "effect", "psci-support" ]
 , packages = ./packages.dhall
 , sources = ["src/**/*.purs"]
+
+, dependencies =
+  [ "console"
+  , "effect"
+  , "psci-support"
+  , "promises"
+  ]
 }
