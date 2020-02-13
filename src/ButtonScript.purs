@@ -1,14 +1,18 @@
 module ButtonScript (main) where
 
+import Data.Array.Partial (head)
 import Effect (Effect)
-import Effect.Exception (Error, message, error)
-import Effect.Promise (class Deferred, Promise, runPromise, reject)
+import Effect.Exception (Error, message)
+import Effect.Promise (class Deferred, Promise, runPromise)
+import Effect.Promise.Console (log)
+import Partial.Unsafe (unsafePartial)
+
 import ButtonScript.Foreign
     ( document, querySelector, elementTextContent
     , Event, eventTarget
     , addEventListener
     , elementClassList, classListHas, classListAdd, classListRemove
-    , WETab, tabsQuery, tabId
+    , tabsQuery, tabId
     , insertTabCss, removeTabCss
     , sendTabMessage
     , injectContentScript, extensionGetUrl
@@ -28,14 +32,17 @@ reportScriptError err = do
 
 main :: Effect Unit
 main = do
-    runPromise pure reportScriptError
-        (injectContentScript "/build/content_script.js")
+    runPromise pure reportScriptError $
+        injectContentScript "/build/content_script.js"
     addEventListener document "click" buttonClicked
 
 
+-- | Action that runs when something on the thingy was clicked. May noy be a
+-- | button, but only handles button clicks
 buttonClicked :: Event -> Effect Unit
-buttonClicked ev = runPromise pure report (buttonClicked' ev)
+buttonClicked ev = runPromise pure report $ buttonClicked' ev
     where report e = Console.error $ "Failed to beastify: " <> message e
+
 buttonClicked' :: Deferred => Event -> Promise Unit
 buttonClicked' event =
     let target = eventTarget event
@@ -44,11 +51,10 @@ buttonClicked' event =
         _ | targetClasses `classListHas` "beast" -> do
               tabs <- tabsQuery {active: true, currentWindow: true}
               let content = elementTextContent target
-              beastify content tabs
+              beastify content
           | targetClasses `classListHas` "reset" -> do
-              tabs <- tabsQuery {active: true, currentWindow: true}
               let content = elementTextContent target
-              reset tabs
+              reset
         otherwise -> pure unit
 
 
@@ -68,23 +74,24 @@ beastNameToUrl name =
 beastify
     :: Deferred
     => String -- ^ Text content of button pressed
-    -> Array WETab
     -> Promise Unit
-beastify buttonContent tabs = do
+beastify buttonContent = do
+    log "querying for tabs"
+    tabs <- tabsQuery {active: true, currentWindow: true}
+    log "inserting tab css"
     insertTabCss {code: hidePageCss}
-    target <- case tabs of -- why no head in prelude?
-        [head, _] -> pure $ tabId head
-        _ -> reject $ error "Empty tab list"
+    log "getting tab target"
+    let target = tabId $ unsafePartial $ head $ tabs
     let url = beastNameToUrl buttonContent
+    log "sending tab message"
     sendTabMessage target {command: "beastify", beastURL: url}
 
 -- | Undo effects of beastify
-reset :: Deferred => Array WETab -> Promise Unit
-reset tabs = do
+reset :: Deferred => Promise Unit
+reset = do
+    tabs <- tabsQuery {active: true, currentWindow: true}
     removeTabCss {code: hidePageCss}
-    target <- case tabs of -- why no head in prelude?
-        [head, _] -> pure $ tabId head
-        _ -> reject $ error "Empty tab list"
+    let target = tabId $ unsafePartial $ head $ tabs
     sendTabMessage target {command: "reset"}
 
 

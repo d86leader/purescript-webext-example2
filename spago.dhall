@@ -4,7 +4,9 @@
 
 , dependencies =
   [ "console"
+  , "arrays"
   , "effect"
+  , "partial"
   , "psci-support"
   , "promises"
   ]

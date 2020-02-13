@@ -11,7 +11,7 @@ exports.elementTextContent = function(elem) {
 exports.elementClassList = function(elem) {
     return elem.classList;
 }
-exports.classListHas = function(clist, str) {
+exports.classListHas_ = function(clist, str) {
     return clist.contains(str);
 }
 exports.extensionGetUrl = browser.runtime.getURL;

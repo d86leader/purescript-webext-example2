@@ -76,7 +76,9 @@ foreign import data ClassList :: Type
 -- | List of element CSS classes
 foreign import elementClassList :: Element -> ClassList
 -- | Check if class is in class list
-foreign import classListHas :: ClassList -> String -> Boolean
+classListHas :: ClassList -> String -> Boolean
+classListHas = runFn2 classListHas_
+foreign import classListHas_ :: Fn2 ClassList String Boolean
 -- | Add class to list
 classListAdd :: ClassList -> String -> Effect Unit
 classListAdd = runEffectFn2 classListAdd_
