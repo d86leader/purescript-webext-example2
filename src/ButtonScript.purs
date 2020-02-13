@@ -4,7 +4,6 @@ import Data.Array.Partial (head)
 import Effect (Effect)
 import Effect.Exception (Error, message)
 import Effect.Promise (class Deferred, Promise, runPromise)
-import Effect.Promise.Console (log)
 import Partial.Unsafe (unsafePartial)
 
 import ButtonScript.Foreign
@@ -64,7 +63,7 @@ beastNameToUrl name =
     let imageName = case name of
          "Frog"  -> "frog.jpg"
          "Snake" -> "snake.jpg"
-         "turtle" -> "turtle.jpg"
+         "Turtle" -> "turtle.jpg"
          _ -> "404.jpg"
     in extensionGetUrl $ "resources/beasts/" <> imageName
 
@@ -76,14 +75,10 @@ beastify
     => String -- ^ Text content of button pressed
     -> Promise Unit
 beastify buttonContent = do
-    log "querying for tabs"
     tabs <- tabsQuery {active: true, currentWindow: true}
-    log "inserting tab css"
     insertTabCss {code: hidePageCss}
-    log "getting tab target"
     let target = tabId $ unsafePartial $ head $ tabs
     let url = beastNameToUrl buttonContent
-    log "sending tab message"
     sendTabMessage target {command: "beastify", beastURL: url}
 
 -- | Undo effects of beastify
