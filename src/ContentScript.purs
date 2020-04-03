@@ -1,5 +1,7 @@
 module ContentScript (main) where
 
+import Browser.Event (addListener)
+import Browser.Runtime (onMessage)
 import ButtonScript.Foreign (elementClassList, classListAdd)
 import Effect (Effect)
 
@@ -7,7 +9,6 @@ import ContentScript.Foreign
     ( scriptHasRun, setScriptHasRun
     , createElement, setElementAttribute, setElementStyle
     , appendBodyElement, removeMatchingElements
-    , addMessageListener
     )
 
 import Prelude
@@ -18,10 +19,10 @@ main = do
     hasRun <- scriptHasRun
     if hasRun
     then pure unit
-    else setScriptHasRun *> addMessageListener onMessage
+    else setScriptHasRun *> addListener handleMessage onMessage
 
-onMessage :: {command :: String, beastURL :: String} -> Effect Unit
-onMessage msg = case msg.command of
+handleMessage :: {command :: String, beastURL :: String} -> Effect Unit
+handleMessage msg = case msg.command of
     "beastify" -> insertBeast msg.beastURL
     "reset"    -> removeExistingBeasts
     _ -> pure unit

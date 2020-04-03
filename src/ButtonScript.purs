@@ -1,6 +1,8 @@
 module ButtonScript (main) where
 
+import Browser.Runtime (getUrl)
 import Data.Array.Partial (head)
+import Data.Options ((:=))
 import Effect (Effect)
 import Effect.Exception (Error, message)
 import Effect.Promise (class Deferred, Promise, runPromise)
@@ -11,13 +13,10 @@ import ButtonScript.Foreign
     , Event, eventTarget
     , addEventListener
     , elementClassList, classListHas, classListAdd, classListRemove
-    , tabsQuery, tabId
-    , insertTabCss, removeTabCss
-    , sendTabMessage
-    , injectContentScript, extensionGetUrl
     )
 
 import Effect.Console as Console
+import Browser.Tabs as Tabs
 
 import Prelude
 
@@ -31,8 +30,9 @@ reportScriptError err = do
 
 main :: Effect Unit
 main = do
-    runPromise pure reportScriptError $
-        injectContentScript "/build/content_script.js"
+    runPromise pure reportScriptError $ void $
+        Tabs.executeScriptCurrent $
+            Tabs.file := "/build/content_script.js"
     addEventListener document "click" buttonClicked
 
 
@@ -48,7 +48,9 @@ buttonClicked' event =
         targetClasses = elementClassList target
     in case unit of
         _ | targetClasses `classListHas` "beast" -> do
-              tabs <- tabsQuery {active: true, currentWindow: true}
+              tabs <- Tabs.query $
+                       Tabs.active := true
+                    <> Tabs.currentWindow := true
               let content = elementTextContent target
               beastify content
           | targetClasses `classListHas` "reset" -> do
@@ -65,7 +67,7 @@ beastNameToUrl name =
          "Snake" -> "snake.jpg"
          "Turtle" -> "turtle.jpg"
          _ -> "404.jpg"
-    in extensionGetUrl $ "resources/beasts/" <> imageName
+    in getUrl $ "resources/beasts/" <> imageName
 
 
 -- | Inset page-hiding CSS into active tab, and send a beastify message to the
@@ -75,19 +77,27 @@ beastify
     => String -- ^ Text content of button pressed
     -> Promise Unit
 beastify buttonContent = do
-    tabs <- tabsQuery {active: true, currentWindow: true}
-    insertTabCss {code: hidePageCss}
-    let target = tabId $ unsafePartial $ head $ tabs
+    tabs <- Tabs.query $
+             Tabs.active := true
+          <> Tabs.currentWindow := true
+    Tabs.insertCssCurrent $
+        Tabs.code := hidePageCss
+    let targetTab = unsafePartial $ head $ tabs
+    let target = targetTab.id
     let url = beastNameToUrl buttonContent
-    sendTabMessage target {command: "beastify", beastURL: url}
+    void $ Tabs.sendMessage target {command: "beastify", beastURL: url}
 
 -- | Undo effects of beastify
 reset :: Deferred => Promise Unit
 reset = do
-    tabs <- tabsQuery {active: true, currentWindow: true}
-    removeTabCss {code: hidePageCss}
-    let target = tabId $ unsafePartial $ head $ tabs
-    sendTabMessage target {command: "reset"}
+    tabs <- Tabs.query $
+             Tabs.active := true
+          <> Tabs.currentWindow := true
+    Tabs.insertCssCurrent $
+        Tabs.code := hidePageCss
+    let targetTab = unsafePartial $ head $ tabs
+    let target = targetTab.id
+    void $ Tabs.sendMessage target {command: "reset"}
 
 
 hidePageCss :: String

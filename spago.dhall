@@ -9,5 +9,6 @@
   , "partial"
   , "psci-support"
   , "promises"
+  , "web-extensions"
   ]
 }

@@ -2,14 +2,13 @@ module ContentScript.Foreign
     ( scriptHasRun, setScriptHasRun
     , createElement, setElementAttribute, setElementStyle
     , appendBodyElement, removeMatchingElements
-    , addMessageListener
     ) where
 
 import ButtonScript.Foreign (Element)
 import Data.Unit (Unit)
 import Effect (Effect)
 import Effect.Uncurried ( EffectFn3, EffectFn1
-                        , runEffectFn3, mkEffectFn1, runEffectFn1
+                        , runEffectFn3, runEffectFn1
                         )
 
 foreign import setProperty_ :: forall a. EffectFn3 a String String Unit
@@ -42,9 +41,3 @@ foreign import removeMatchingElements_ :: EffectFn1 String Unit
 setElementStyle :: String -> String -> Element -> Effect Unit
 setElementStyle = runEffectFn3 setElementStyle_
 foreign import setElementStyle_ :: EffectFn3 String String Element Unit
-
-
-addMessageListener :: forall d. ({ | d} -> Effect Unit) -> Effect Unit
-addMessageListener cb = runEffectFn1 addMessageListener_ (mkEffectFn1 cb)
-foreign import addMessageListener_ :: forall d.
-    EffectFn1 (EffectFn1 { | d} Unit) Unit

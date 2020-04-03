@@ -6,15 +6,10 @@ module ButtonScript.Foreign
     , Event, eventTarget
     , addEventListener
     , ClassList, elementClassList, classListHas, classListAdd, classListRemove
-    , WETab, tabsQuery, tabId
-    , insertTabCss, removeTabCss
-    , sendTabMessage
-    , injectContentScript, extensionGetUrl
     ) where
 
 import Prelude
 import Effect (Effect)
-import Effect.Promise (Promise)
 import Effect.Uncurried ( EffectFn3, EffectFn2, EffectFn1
                         , runEffectFn3, runEffectFn2, mkEffectFn1
                         )
@@ -61,16 +56,6 @@ foreign import addEventListener_ ::
 foreign import eventTarget :: Event -> Element
 
 
--- | WebExtensions tabs
-foreign import data WETab :: Type
--- | Query tabs on some parameters. Idk the record fields
-foreign import tabsQuery :: forall r.
-       { | r}
-    -> Promise (Array WETab)
--- | Get Tab id
-foreign import tabId :: WETab -> Int
-
-
 -- | Class list is not a simple array, oh no
 foreign import data ClassList :: Type
 -- | List of element CSS classes
@@ -91,28 +76,5 @@ foreign import classListRemove_ ::
     EffectFn2 ClassList String Unit
 
 
--- | Inserts css text into active tab
-foreign import insertTabCss :: forall r.
-       {code :: String | r}
-    -> Promise Unit
--- | Removes css text from active tab
-foreign import removeTabCss :: forall r.
-       {code :: String | r}
-    -> Promise Unit
-
--- | Send message to WebExtensions code in tab
-sendTabMessage :: forall r.
-       Int -- ^ Tab id
-    -> { | r} -- ^ Message data
-    -> Promise Unit
-sendTabMessage = runFn2 sendTabMessage_
-foreign import sendTabMessage_ :: forall r.
-    Fn2 Int { | r} (Promise Unit)
-
-
--- | Run JS code in current tab
-foreign import injectContentScript :: String -> Promise Unit
--- | Get resolved url to extension resource
-foreign import extensionGetUrl :: String -> String
 -- | Get text content of DOM element
 foreign import elementTextContent :: Element -> String

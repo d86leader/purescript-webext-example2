@@ -1,0 +1,3 @@
+[submodule "libs/purescript-web-extensions"]
+	path = libs/purescript-web-extensions
+	url = https://gitlab.com/d86leader/purescript-web-extensions

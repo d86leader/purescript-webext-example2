@@ -14,10 +14,6 @@ exports.elementClassList = function(elem) {
 exports.classListHas_ = function(clist, str) {
     return clist.contains(str);
 }
-exports.extensionGetUrl = browser.runtime.getURL;
-exports.tabId = function(tab) {
-    return tab.id;
-}
 
 
 // Simple Effect
@@ -32,14 +28,4 @@ exports.classListRemove_ = function(clist, str) {
 }
 exports.querySelector_ = function(elem, str) {
     return elem.querySelector(str);
-}
-
-
-// Promise based
-exports.tabsQuery = browser.tabs.query;
-exports.insertTabCss = browser.tabs.insertCSS;
-exports.removeTabCss = browser.tabs.insertCSS;
-exports.sendTabMessage_ = browser.tabs.sendMessage;
-exports.injectContentScript = function(path) {
-    return browser.tabs.executeScript({file: path});
 }

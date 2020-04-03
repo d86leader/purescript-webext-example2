@@ -30,6 +30,3 @@ exports.removeMatchingElements_ = function(q) {
 exports.setElementStyle_ = function(s, x, elem) {
     elem.style[s] = x;
 }
-exports.addMessageListener_ = function(cb) {
-    browser.runtime.onMessage.addListener(cb);
-}
