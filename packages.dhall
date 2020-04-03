@@ -125,6 +125,7 @@ let overrides = {=}
 
 let additions =
   { web-extensions = ./libs/purescript-web-extensions/spago.dhall as Location
+  , vanilla-web = ./libs/purescript-vanilla-web/spago.dhall as Location
   }
 
 in  upstream // overrides // additions

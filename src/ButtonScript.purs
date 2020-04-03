@@ -2,18 +2,18 @@ module ButtonScript (main) where
 
 import Browser.Runtime (getUrl)
 import Data.Array.Partial (head)
+import Data.Maybe (Maybe (Just, Nothing))
 import Data.Options ((:=))
 import Effect (Effect)
+import Effect.Class (liftEffect)
 import Effect.Exception (Error, message)
 import Effect.Promise (class Deferred, Promise, runPromise)
 import Partial.Unsafe (unsafePartial)
-
-import ButtonScript.Foreign
-    ( document, querySelector, elementTextContent
-    , Event, eventTarget
-    , addEventListener
-    , elementClassList, classListHas, classListAdd, classListRemove
-    )
+import Vanilla.Dom.Element (classList)
+import Vanilla.Dom.Event (Event, eventTarget, addEventListener, fromEventTarget)
+import Vanilla.Dom.Document (document)
+import Vanilla.Dom.Node (querySelector, textContent, fromNode')
+import Vanilla.Dom.TokenList (tokenListHas, tokenListAdd, tokenListRemove)
 
 import Effect.Console as Console
 import Browser.Tabs as Tabs
@@ -22,10 +22,10 @@ import Prelude
 
 reportScriptError :: Error -> Effect Unit
 reportScriptError err = do
-    flip classListAdd    "hidden" =<< map elementClassList
-        (querySelector document "#popup-content")
-    flip classListRemove "hidden" =<< map elementClassList
-        (querySelector document "#error-content")
+    tokenListAdd "hidden" <<< classList <<< fromNode'
+        <<< querySelector "#popup-content" $ document
+    tokenListRemove "hidden" <<< classList <<< fromNode'
+        <<< querySelector "#error-content" $ document
 
 
 main :: Effect Unit
@@ -33,7 +33,7 @@ main = do
     runPromise pure reportScriptError $ void $
         Tabs.executeScriptCurrent $
             Tabs.file := "/build/content_script.js"
-    addEventListener document "click" buttonClicked
+    addEventListener "click" buttonClicked document
 
 
 -- | Action that runs when something on the thingy was clicked. May noy be a
@@ -43,20 +43,21 @@ buttonClicked ev = runPromise pure report $ buttonClicked' ev
     where report e = Console.error $ "Failed to beastify: " <> message e
 
 buttonClicked' :: Deferred => Event -> Promise Unit
-buttonClicked' event =
-    let target = eventTarget event
-        targetClasses = elementClassList target
-    in case unit of
-        _ | targetClasses `classListHas` "beast" -> do
-              tabs <- Tabs.query $
-                       Tabs.active := true
-                    <> Tabs.currentWindow := true
-              let content = elementTextContent target
-              beastify content
-          | targetClasses `classListHas` "reset" -> do
-              let content = elementTextContent target
-              reset
-        otherwise -> pure unit
+buttonClicked' event = case fromEventTarget $ eventTarget event of
+    Nothing -> liftEffect $ Console.error "Bad event target"
+    Just target ->
+        let targetClasses = classList target
+        in case unit of
+            _ | tokenListHas "beast" targetClasses -> do
+                  tabs <- Tabs.query $
+                           Tabs.active := true
+                        <> Tabs.currentWindow := true
+                  let content = textContent target
+                  beastify content
+              | tokenListHas "reset" targetClasses -> do
+                  let content = textContent target
+                  reset
+            otherwise -> pure unit
 
 
 
