@@ -1,0 +1,23 @@
+{
+  "name": "purescript-vanilla-web",
+  "version": "1.0.0",
+  "description": "A sink of purescript bindings to DOM controlling functions",
+  "main": "index.js",
+  "scripts": {
+    "build": "spago build",
+    "build:ide": "spago build -- --json-errors"
+  },
+  "repository": {
+    "type": "git",
+    "url": "purescript-vanilla-web"
+  },
+  "keywords": [
+    "purescript"
+  ],
+  "author": "d86leader",
+  "license": "MIT",
+  "devDependencies": {
+    "purescript": "^0.13.6",
+    "spago": "^0.13.1"
+  }
+}
