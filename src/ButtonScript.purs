@@ -6,13 +6,13 @@ import Data.Maybe (Maybe (Just, Nothing))
 import Data.Options ((:=))
 import Effect (Effect)
 import Effect.Class (liftEffect)
-import Effect.Exception (Error, message)
+import Effect.Exception (Error, throwException)
 import Effect.Promise (class Deferred, Promise, runPromise)
 import Partial.Unsafe (unsafePartial)
 import Vanilla.Dom.Element (classList)
 import Vanilla.Dom.Event (Event, eventTarget, addEventListener, fromEventTarget)
 import Vanilla.Dom.Document (document)
-import Vanilla.Dom.Node (querySelector, textContent, fromNode')
+import Vanilla.Dom.Node (querySelector, textContent, fromNodeEx)
 import Vanilla.Dom.TokenList (tokenListHas, tokenListAdd, tokenListRemove)
 
 import Effect.Console as Console
@@ -22,11 +22,11 @@ import Prelude
 
 reportScriptError :: Error -> Effect Unit
 reportScriptError err = do
-    Console.error (message err)
+    Console.error (show err)
     popup <- pure $ querySelector "#popup-content" $ document
-    tokenListAdd "hidden" <<< classList <<< fromNode' $ popup
+    tokenListAdd "hidden" <<< classList <<< fromNodeEx $ popup
     errcon <- pure $ querySelector "#error-content" $ document
-    tokenListRemove "hidden" <<< classList <<< fromNode' $ errcon
+    tokenListRemove "hidden" <<< classList <<< fromNodeEx $ errcon
 
 
 main :: Effect Unit
@@ -40,26 +40,24 @@ main = do
 -- | Action that runs when something on the thingy was clicked. May noy be a
 -- | button, but only handles button clicks
 buttonClicked :: Event -> Effect Unit
-buttonClicked ev =
-    Console.log "Button pressed" *>
-    (runPromise pure report $ buttonClicked' ev)
-    where report e = Console.error $ "Failed to beastify: " <> message e
+buttonClicked ev = runPromise pure throwException do
+    liftEffect $ Console.log "Button pressed"
+    buttonClicked' ev
 
 buttonClicked' :: Deferred => Event -> Promise Unit
 buttonClicked' event = case fromEventTarget $ eventTarget event of
     Nothing -> liftEffect $ Console.error "Bad event target"
-    Just target ->
+    Just target -> do
         let targetClasses = classList target
-        in case unit of
+        case unit of
             _ | tokenListHas "beast" targetClasses -> do
                   tabs <- Tabs.query $
                            Tabs.active := true
                         <> Tabs.currentWindow := true
-                  content <- liftEffect $ pure $ textContent target
+                  content <- liftEffect $ textContent target
+                  liftEffect <<< Console.log $ "content: " <> content
                   beastify content
-              | tokenListHas "reset" targetClasses -> do
-                  let content = textContent target
-                  reset
+              | tokenListHas "reset" targetClasses -> reset
             otherwise -> pure unit
 
 
