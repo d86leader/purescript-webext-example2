@@ -1,6 +1,11 @@
 "use strict";
 
 exports.document = document;
+exports.body = document.body;
+
+exports.createElement_ = function(name) {
+    return document.createElement(name);
+}
 
 exports.fromEventTarget_ = function(just, nothing, anyTarget) {
     if (anyTarget instanceof Document) {

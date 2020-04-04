@@ -22,6 +22,7 @@ import Prelude
 
 reportScriptError :: Error -> Effect Unit
 reportScriptError err = do
+    Console.error (message err)
     tokenListAdd "hidden" <<< classList <<< fromNode'
         <<< querySelector "#popup-content" $ document
     tokenListRemove "hidden" <<< classList <<< fromNode'
@@ -39,7 +40,9 @@ main = do
 -- | Action that runs when something on the thingy was clicked. May noy be a
 -- | button, but only handles button clicks
 buttonClicked :: Event -> Effect Unit
-buttonClicked ev = runPromise pure report $ buttonClicked' ev
+buttonClicked ev =
+    Console.log "Button pressed" *>
+    (runPromise pure report $ buttonClicked' ev)
     where report e = Console.error $ "Failed to beastify: " <> message e
 
 buttonClicked' :: Deferred => Event -> Promise Unit
@@ -86,7 +89,9 @@ beastify buttonContent = do
     let targetTab = unsafePartial $ head $ tabs
     let target = targetTab.id
     let url = beastNameToUrl buttonContent
-    void $ Tabs.sendMessage target {command: "beastify", beastURL: url}
+    liftEffect <<< Console.log $ "Sending besatify message: " <> url
+    _ <- Tabs.sendMessage target {command: "beastify", beastURL: url}
+    pure unit
 
 -- | Undo effects of beastify
 reset :: Deferred => Promise Unit

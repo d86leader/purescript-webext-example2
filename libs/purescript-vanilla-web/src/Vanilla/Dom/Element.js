@@ -13,6 +13,22 @@ exports.innerHtml = function(elem) {
 exports.classList = function(elem) {
     return elem.classList;
 }
+exports.setAttribute_ = function(name, elem, value) {
+    elem.setAttribute(name, value);
+}
+exports.remove = function(elem) {
+    return function() { // Effect Unit
+        elem.remove();
+    }
+}
+exports.getStyle = function(s) {
+    return function(elem) {
+        return elem.style[s];
+    }
+}
+exports.setStyle_ = function(s, elem, x) {
+    elem.style[s] = x;
+}
 
 exports.fromEventTarget_ = function(just, nothing, anyTarget) {
     if (anyTarget instanceof Element) {
