@@ -23,10 +23,10 @@ import Prelude
 reportScriptError :: Error -> Effect Unit
 reportScriptError err = do
     Console.error (message err)
-    tokenListAdd "hidden" <<< classList <<< fromNode'
-        <<< querySelector "#popup-content" $ document
-    tokenListRemove "hidden" <<< classList <<< fromNode'
-        <<< querySelector "#error-content" $ document
+    popup <- pure $ querySelector "#popup-content" $ document
+    tokenListAdd "hidden" <<< classList <<< fromNode' $ popup
+    errcon <- pure $ querySelector "#error-content" $ document
+    tokenListRemove "hidden" <<< classList <<< fromNode' $ errcon
 
 
 main :: Effect Unit
@@ -55,7 +55,7 @@ buttonClicked' event = case fromEventTarget $ eventTarget event of
                   tabs <- Tabs.query $
                            Tabs.active := true
                         <> Tabs.currentWindow := true
-                  let content = textContent target
+                  content <- liftEffect $ pure $ textContent target
                   beastify content
               | tokenListHas "reset" targetClasses -> do
                   let content = textContent target
