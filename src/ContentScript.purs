@@ -1,9 +1,9 @@
 module ContentScript (main) where
 
 import Prelude
-import Browser.Event (addListener)
-import Browser.Runtime (onMessage)
+import Browser.Runtime (addMessageListener)
 import Effect (Effect)
+import Message (messageRepr, MessageData)
 import Vanilla.Dom.Document (createElement, body)
 import Vanilla.Dom.Element (setStyle, setAttribute, remove, classList)
 import Vanilla.Dom.Node (appendChild, querySelectorAll, traverseNodeList, fromNodeEx)
@@ -18,13 +18,18 @@ main = do
     hasRun <- getCustomAttribute "hasRun" false
     if hasRun
     then Console.log "Script already ran"
-    else setCustomAttribute "hasRun" true *> addListener handleMessage onMessage
+    else setCustomAttribute "hasRun" true
+      *> addMessageListener messageRepr handleMessage
 
-handleMessage :: {command :: String, beastURL :: String} -> Effect Unit
-handleMessage msg = Console.log "message!" *> case msg.command of
-    "beastify" -> insertBeast msg.beastURL
-    "reset"    -> removeExistingBeasts
-    _ -> pure unit
+handleMessage :: forall sr sd.
+    {message :: MessageData, sender :: sd, sendResponse :: sr} -> Effect Boolean
+handleMessage msg' = Console.log "message!" *>
+    let msg = msg'.message
+        action = case msg.command of
+            "beastify" -> insertBeast msg.beastURL
+            "reset"    -> removeExistingBeasts
+            _ -> pure unit
+    in action *> pure false
 
 
 removeExistingBeasts :: Effect Unit

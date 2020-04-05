@@ -1,6 +1,6 @@
 module ButtonScript (main) where
 
-import Browser.Runtime (getUrl)
+import Browser.Runtime (getUrl, sendMessage)
 import Data.Array.Partial (head)
 import Data.Maybe (Maybe (Just, Nothing))
 import Data.Options ((:=))
@@ -8,6 +8,7 @@ import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Exception (Error, throwException)
 import Effect.Promise (class Deferred, Promise, runPromise)
+import Message (messageRepr)
 import Partial.Unsafe (unsafePartial)
 import Vanilla.Dom.Element (classList)
 import Vanilla.Dom.Event (Event, eventTarget, addEventListener, fromEventTarget)
@@ -88,7 +89,7 @@ beastify buttonContent = do
     let target = targetTab.id
     let url = beastNameToUrl buttonContent
     liftEffect <<< Console.log $ "Sending besatify message: " <> url
-    _ <- Tabs.sendMessage target {command: "beastify", beastURL: url}
+    _ <- sendMessage messageRepr target {command: "beastify", beastURL: url}
     pure unit
 
 -- | Undo effects of beastify
@@ -101,7 +102,8 @@ reset = do
         Tabs.code := hidePageCss
     let targetTab = unsafePartial $ head $ tabs
     let target = targetTab.id
-    void $ Tabs.sendMessage target {command: "reset"}
+    _ <- sendMessage messageRepr target {command: "reset", beastURL: ""}
+    pure unit
 
 
 hidePageCss :: String
